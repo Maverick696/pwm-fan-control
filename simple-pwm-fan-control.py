@@ -1,43 +1,64 @@
-# Created by: Michael Klements
-# For 40mm 5V PWM Fan Control On A Raspberry Pi
-# Sets fan speed proportional to CPU temperature - best for good quality fans
-# Works well with a Pi Desktop Case with OLED Stats Display
-# Installation & Setup Instructions - https://www.the-diy-life.com/connecting-a-pwm-fan-to-a-raspberry-pi/
+# Script for controlling a PWM fan (e.g., 40mm 5V) on a Raspberry Pi.
+# Sets the fan speed proportionally to the CPU temperature.
+# Suitable for good quality fans.
 
-import RPi.GPIO as IO          # Calling GPIO to allow use of the GPIO pins
-import time                    # Calling time to allow delays to be used
-import subprocess              # Calling subprocess to get the CPU temperature
+import RPi.GPIO as IO          # Import the library to control GPIO pins
+import time                    # Import the library to use delays
+import subprocess              # Import the library to execute system commands (not actively used in the final code for temperature)
 
-IO.setwarnings(False)          # Do not show any GPIO warnings
-IO.setmode (IO.BCM)            # BCM pin numbers - PIN8 as ‘GPIO14’
-IO.setup(14,IO.OUT)            # Initialize GPIO14 as our fan output pin
-fan = IO.PWM(14,100)           # Set GPIO14 as a PWM output, with 100Hz frequency (this should match your fans specified PWM frequency)
-fan.start(0)                   # Generate a PWM signal with a 0% duty cycle (fan off)
+IO.setwarnings(False)          # Disable GPIO warning messages
+IO.setmode (IO.BCM)            # Use BCM numbering for GPIO pins (GPIO14 corresponds to physical pin 8)
+IO.setup(14,IO.OUT)            # Initialize GPIO14 as the fan output pin
+fan = IO.PWM(14,100)           # Set GPIO14 as PWM output with 100Hz frequency (adjust to the fan's specified PWM frequency)
+fan.start(0)                   # Start the PWM signal with a 0% duty cycle (fan off)
 
-minTemp = 25                   # Temperature and speed range variables, edit these to adjust max and min temperatures and speeds
-maxTemp = 80
-minSpeed = 0
-maxSpeed = 100
+minTemp = 25                   # Minimum temperature (Celsius) to start the fan
+maxTemp = 75                   # Maximum temperature (Celsius) to reach maximum speed
+minSpeed = 0                   # Minimum fan speed (duty cycle percentage)
+maxSpeed = 100                 # Maximum fan speed (duty cycle percentage)
+MAX_FAN_SPEED = 100            # Maximum speed (percentage) to set when exiting the script
 
-def get_temp():                             # Function to read in the CPU temperature and return it as a float in degrees celcius
-    output = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True)
-    temp_str = output.stdout.decode()
+# Function to read the CPU temperature and return it as a float in degrees Celsius
+def get_temp():
     try:
-        return float(temp_str.split('=')[1].split('\'')[0])
-    except (IndexError, ValueError):
-        raise RuntimeError('Could not get temperature')
-    
-def renormalize(n, range1, range2):         # Function to scale the read temperature to the fan speed range
-    delta1 = range1[1] - range1[0]
-    delta2 = range2[1] - range2[0]
-    return (delta2 * (n - range1[0]) / delta1) + range2[0]
+        # Read the temperature from the thermal sensor system file
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+            temp_str = f.read()
+        # Convert the read string (in millidegrees Celsius) to a float (degrees Celsius)
+        return float(temp_str) / 1000.0
+    except (FileNotFoundError, ValueError):
+        # Handle errors if the file doesn't exist or the value is invalid
+        raise RuntimeError('Could not read temperature from thermal zone')
 
-while 1:                                    # Execute loop forever
-    temp = get_temp()                       # Get the current CPU temperature
-    if temp < minTemp:                      # Constrain temperature to set range limits
-        temp = minTemp
-    elif temp > maxTemp:
-        temp = maxTemp
-    temp = int(renormalize(temp, [minTemp, maxTemp], [minSpeed, maxSpeed]))
-    fan.ChangeDutyCycle(temp)               # Set fan duty based on temperature, from minSpeed to maxSpeed
-    time.sleep(5)                           # Sleep for 5 seconds
+# Function to map a value from an input range to an output range
+def renormalize(input_value, input_range, output_range):
+    input_span = input_range[1] - input_range[0]
+    output_span = output_range[1] - output_range[0]
+    # Scale the input value from the input range to the output range
+    scaled_value = (output_span * (input_value - input_range[0]) / input_span) + output_range[0]
+    return scaled_value
+
+try:
+    while 1:                                    # Execute the loop indefinitely
+        # Get the current CPU temperature
+        raw_temp = get_temp()
+        # Clamp the read temperature within the [minTemp, maxTemp] range
+        clamped_temp = max(minTemp, min(raw_temp, maxTemp))
+        # Calculate the fan speed by mapping the clamped temperature to the [minSpeed, maxSpeed] range
+        fan_speed = int(renormalize(clamped_temp, [minTemp, maxTemp], [minSpeed, maxSpeed]))
+
+        # Set the PWM duty cycle to control the fan speed
+        fan.ChangeDutyCycle(fan_speed)
+
+        # Print the CPU temperature and the calculated fan speed
+        print(f"CPU Temperature: {raw_temp:.1f}°C")
+        print(f"Fan Speed: {fan_speed}%")
+
+        # Wait 5 seconds before the next reading/update
+        time.sleep(5)
+
+except KeyboardInterrupt: # Catch keyboard interrupt (CTRL+C)
+    print("\nExiting script. Setting fan to maximum speed.")
+finally:                  # Block always executed before exiting (even in case of unhandled errors)
+    fan.ChangeDutyCycle(MAX_FAN_SPEED) # Set fan speed to 100%
+    IO.cleanup()          # Release GPIO resources used by the script
