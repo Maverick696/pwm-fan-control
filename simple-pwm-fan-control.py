@@ -5,6 +5,7 @@
 import RPi.GPIO as IO          # Import the library to control GPIO pins
 import time                    # Import the library to use delays
 import subprocess              # Import the library to execute system commands (not actively used in the final code for temperature)
+import collections             # Import for storing historical data
 
 IO.setwarnings(False)          # Disable GPIO warning messages
 IO.setmode (IO.BCM)            # Use BCM numbering for GPIO pins (GPIO14 corresponds to physical pin 8)
@@ -17,6 +18,21 @@ maxTemp = 75                   # Maximum temperature (Celsius) to reach maximum 
 minSpeed = 0                   # Minimum fan speed (duty cycle percentage)
 maxSpeed = 100                 # Maximum fan speed (duty cycle percentage)
 MAX_FAN_SPEED = 100            # Maximum speed (percentage) to set when exiting the script
+
+# Constants for graph
+GRAPH_WIDTH = 60              # Width of the graph in characters
+GRAPH_HEIGHT = 10             # Height of the graph in characters
+MAX_HISTORY = GRAPH_WIDTH     # Maximum number of data points to store
+
+# Store historical data
+temp_history = collections.deque(maxlen=MAX_HISTORY)
+fan_history = collections.deque(maxlen=MAX_HISTORY)
+
+# ANSI color codes
+RED = "\033[31m"
+BLUE = "\033[34m"
+WHITE = "\033[37m"
+RESET = "\033[0m"
 
 # Function to read the CPU temperature and return it as a float in degrees Celsius
 def get_temp():
@@ -42,6 +58,70 @@ def renormalize(input_value, input_range, output_range):
 def clear_console():
     print("\033[H\033[J", end="")  # ANSI escape code to clear screen and move cursor to home position
 
+# Function to draw the ASCII graph
+def draw_graph():
+    # If we don't have enough data yet, return an empty string
+    if not temp_history:
+        return "Collecting data for graph...\n"
+    
+    # Create a 2D array to represent the graph (filled with spaces)
+    graph = [[' ' for _ in range(GRAPH_WIDTH)] for _ in range(GRAPH_HEIGHT)]
+    
+    # Calculate the range for the temperature scale
+    temp_min = min(minTemp, min(temp_history)) if temp_history else minTemp
+    temp_max = max(maxTemp, max(temp_history)) if temp_history else maxTemp
+    temp_range = temp_max - temp_min
+    
+    # Draw the temperature line (red)
+    for i, temp in enumerate(temp_history):
+        if i >= GRAPH_WIDTH:
+            break
+        # Calculate the y position (inverted because higher index is lower on screen)
+        y_pos = GRAPH_HEIGHT - 1 - int((temp - temp_min) / temp_range * (GRAPH_HEIGHT - 1))
+        y_pos = max(0, min(GRAPH_HEIGHT - 1, y_pos))  # Ensure it's within bounds
+        graph[y_pos][i] = RED + "●" + RESET
+    
+    # Draw the fan speed line (blue)
+    for i, speed in enumerate(fan_history):
+        if i >= GRAPH_WIDTH:
+            break
+        # Calculate the y position (0% at bottom, 100% at top)
+        y_pos = GRAPH_HEIGHT - 1 - int((speed / 100) * (GRAPH_HEIGHT - 1))
+        y_pos = max(0, min(GRAPH_HEIGHT - 1, y_pos))  # Ensure it's within bounds
+        # Don't overwrite temperature if they're at the same position
+        if graph[y_pos][i] == ' ':
+            graph[y_pos][i] = BLUE + "◆" + RESET
+        else:
+            # If there's a collision, use a different character
+            graph[y_pos][i] = BLUE + "●" + RESET
+    
+    # Build the graph string
+    result = []
+    
+    # Add the temperature scale on the y-axis
+    for i in range(GRAPH_HEIGHT):
+        # Calculate the temperature for this line
+        temp_value = temp_max - (i * temp_range / (GRAPH_HEIGHT - 1))
+        # Add the temperature label every few lines
+        if i == 0 or i == GRAPH_HEIGHT - 1 or i == GRAPH_HEIGHT // 2:
+            y_label = f"{temp_value:4.1f}°C |"
+        else:
+            y_label = "       |"
+        
+        # Add the row with data
+        row = y_label + ''.join(graph[i])
+        result.append(row)
+    
+    # Add the x-axis (time)
+    result.append("       " + "+" + "-" * GRAPH_WIDTH)
+    result.append("       " + "Time →")
+    
+    # Add the legend
+    legend = f"  Legend: {RED}● CPU Temperature{RESET}  {BLUE}◆ Fan Speed (0-100%){RESET}"
+    result.append(legend)
+    
+    return "\n".join(result)
+
 # Function to display the application interface
 def display_interface(temperature, fan_speed):
     clear_console()
@@ -53,6 +133,9 @@ def display_interface(temperature, fan_speed):
     
     # Format and display the values
     print(f"CPU Temperature: {temperature:5.1f}°C    |    Fan Speed: {fan_speed:3d}%\n")
+    
+    # Add the graph below the current values
+    print(draw_graph())
 
 try:
     while 1:                                    # Execute the loop indefinitely
@@ -63,6 +146,10 @@ try:
         # Calculate the fan speed by mapping the clamped temperature to the [minSpeed, maxSpeed] range
         fan_speed = int(renormalize(clamped_temp, [minTemp, maxTemp], [minSpeed, maxSpeed]))
 
+        # Store the current values in the history
+        temp_history.append(raw_temp)
+        fan_history.append(fan_speed)
+        
         # Set the PWM duty cycle to control the fan speed
         fan.ChangeDutyCycle(fan_speed)
 
