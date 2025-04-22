@@ -58,7 +58,7 @@ def renormalize(input_value, input_range, output_range):
 def clear_console():
     print("\033[H\033[J", end="")  # ANSI escape code to clear screen and move cursor to home position
 
-# Function to draw the ASCII graph
+# Function to draw the ASCII graph (CPU temperature only)
 def draw_graph():
     # If we don't have enough data yet, return an empty string
     if not temp_history:
@@ -81,20 +81,6 @@ def draw_graph():
         y_pos = max(0, min(GRAPH_HEIGHT - 1, y_pos))  # Ensure it's within bounds
         graph[y_pos][i] = RED + "●" + RESET
     
-    # Draw the fan speed line (blue)
-    for i, speed in enumerate(fan_history):
-        if i >= GRAPH_WIDTH:
-            break
-        # Calculate the y position (0% at bottom, 100% at top)
-        y_pos = GRAPH_HEIGHT - 1 - int((speed / 100) * (GRAPH_HEIGHT - 1))
-        y_pos = max(0, min(GRAPH_HEIGHT - 1, y_pos))  # Ensure it's within bounds
-        # Don't overwrite temperature if they're at the same position
-        if graph[y_pos][i] == ' ':
-            graph[y_pos][i] = BLUE + "◆" + RESET
-        else:
-            # If there's a collision, use a different character
-            graph[y_pos][i] = BLUE + "●" + RESET
-    
     # Build the graph string
     result = []
     
@@ -116,9 +102,35 @@ def draw_graph():
     result.append("       " + "+" + "-" * GRAPH_WIDTH)
     result.append("       " + "Time →")
     
-    # Add the legend
-    legend = f"  Legend: {RED}● CPU Temperature{RESET}  {BLUE}◆ Fan Speed (0-100%){RESET}"
+    # Add the legend for CPU temperature only
+    legend = f"  Legend: {RED}● CPU Temperature{RESET}"
     result.append(legend)
+    
+    return "\n".join(result)
+
+# Function to draw a fan speed gauge
+def draw_fan_gauge(fan_speed):
+    # Gauge width and character for filling
+    gauge_width = GRAPH_WIDTH
+    fill_char = "█"
+    empty_char = "░"
+    
+    # Calculate how many characters to fill based on fan speed percentage
+    fill_width = int((fan_speed / 100) * gauge_width)
+    
+    # Create the gauge bar
+    gauge_bar = BLUE + fill_char * fill_width + empty_char * (gauge_width - fill_width) + RESET
+    
+    # Create the gauge labels
+    gauge_label = "Fan Speed: "
+    gauge_min = "0%"
+    gauge_max = "100%"
+    
+    # Build the gauge display
+    result = []
+    result.append("\nFan Speed Gauge:")
+    result.append(f"{gauge_label}{gauge_bar} {fan_speed}%")
+    result.append(f"{gauge_min}{' ' * (gauge_width - len(gauge_min) - len(gauge_max) + 10)}{gauge_max}")
     
     return "\n".join(result)
 
@@ -134,8 +146,11 @@ def display_interface(temperature, fan_speed):
     # Format and display the values
     print(f"CPU Temperature: {temperature:5.1f}°C    |    Fan Speed: {fan_speed:3d}%\n")
     
-    # Add the graph below the current values
+    # Add the temperature graph
     print(draw_graph())
+    
+    # Add the fan speed gauge below the graph
+    print(draw_fan_gauge(fan_speed))
 
 try:
     while 1:                                    # Execute the loop indefinitely
