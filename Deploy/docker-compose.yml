@@ -1,0 +1,14 @@
+services:
+  fancommander:
+    image: maverick696/fan-commander:latest
+    container_name: fancommander
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/gpiomem:/dev/gpiomem
+      - /sys/class/thermal:/sys/class/thermal:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    # (opzionale) monta la configurazione custom
+    # volumes:
+    #   - ./appsettings.Production.json:/app/appsettings.json:ro
