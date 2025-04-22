@@ -38,6 +38,22 @@ def renormalize(input_value, input_range, output_range):
     scaled_value = (output_span * (input_value - input_range[0]) / input_span) + output_range[0]
     return scaled_value
 
+# Function to clear the console screen
+def clear_console():
+    print("\033[H\033[J", end="")  # ANSI escape code to clear screen and move cursor to home position
+
+# Function to display the application interface
+def display_interface(temperature, fan_speed):
+    clear_console()
+    
+    # Application title
+    title = "PWM FAN Control"
+    border = "=" * len(title)
+    print(f"\n{border}\n{title}\n{border}\n")
+    
+    # Format and display the values
+    print(f"CPU Temperature: {temperature:5.1f}°C    |    Fan Speed: {fan_speed:3d}%\n")
+
 try:
     while 1:                                    # Execute the loop indefinitely
         # Get the current CPU temperature
@@ -50,9 +66,8 @@ try:
         # Set the PWM duty cycle to control the fan speed
         fan.ChangeDutyCycle(fan_speed)
 
-        # Print the CPU temperature and the calculated fan speed
-        print(f"CPU Temperature: {raw_temp:.1f}°C")
-        print(f"Fan Speed: {fan_speed}%")
+        # Display the interface with current values
+        display_interface(raw_temp, fan_speed)
 
         # Wait 5 seconds before the next reading/update
         time.sleep(5)
