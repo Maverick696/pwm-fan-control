@@ -6,19 +6,23 @@ namespace FanCommander.Console;
 public interface IConsoleDisplayService
 {
     void Update(double temperature, int fanSpeed);
+    void AddLog(string message);
 }
 
 public class ConsoleDisplayService : IConsoleDisplayService
 {
     private const int GraphWidth = 60;
     private const int GraphHeight = 10;
+    private const int LogLines = 8;
     private readonly HistoryBuffer<double> _tempHistory;
     private readonly HistoryBuffer<int> _fanHistory;
+    private readonly HistoryBuffer<string> _logBuffer;
 
     public ConsoleDisplayService()
     {
         _tempHistory = new HistoryBuffer<double>(GraphWidth);
         _fanHistory = new HistoryBuffer<int>(GraphWidth);
+        _logBuffer = new HistoryBuffer<string>(LogLines);
     }
 
     public void Update(double temperature, int fanSpeed)
@@ -32,6 +36,15 @@ public class ConsoleDisplayService : IConsoleDisplayService
         System.Console.WriteLine($"CPU Temperature: {temperature,5:F1}°C    |    Fan Speed: {fanSpeed,3}%\n");
         System.Console.WriteLine(DrawGraph(_tempHistory.GetAll()));
         System.Console.WriteLine(DrawFanGauge(fanSpeed));
+        System.Console.WriteLine();
+        System.Console.WriteLine("Log:");
+        foreach (var log in _logBuffer.GetAll())
+            System.Console.WriteLine(log);
+    }
+
+    public void AddLog(string message)
+    {
+        _logBuffer.Add(message);
     }
 
     private void ClearConsole()

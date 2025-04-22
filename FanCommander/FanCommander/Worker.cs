@@ -34,7 +34,10 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("FanCommander avviato. PWM su GPIO{pin} a {freq}Hz", _settings.PwmPin, _settings.PwmFrequency);
+        string startMsg = $"FanCommander avviato. PWM su GPIO{_settings.PwmPin} a {_settings.PwmFrequency}Hz";
+        if (_isDevelopment && _consoleDisplayService != null)
+            _consoleDisplayService.AddLog(startMsg);
+        _logger.LogInformation(startMsg);
         _fanService.Start();
         try
         {
@@ -44,19 +47,22 @@ public class Worker : BackgroundService
                 double clampedTemp = Math.Clamp(temperature, _settings.MinTemp, _settings.MaxTemp);
                 int fanSpeed = (int)Renormalizer.Renormalize(clampedTemp, _settings.MinTemp, _settings.MaxTemp, _settings.MinSpeed, _settings.MaxSpeed);
                 _fanService.SetFanSpeed(fanSpeed);
-                _logger.LogInformation("Temp: {temp:F1}°C | Fan: {fan}%", temperature, fanSpeed);
-
+                string infoMsg = $"Temp: {temperature:F1}°C | Fan: {fanSpeed}%";
                 if (_isDevelopment && _consoleDisplayService != null)
                 {
                     _consoleDisplayService.Update(temperature, fanSpeed);
+                    _consoleDisplayService.AddLog(infoMsg);
                 }
-
+                _logger.LogInformation(infoMsg);
                 await Task.Delay(_settings.UpdateIntervalMs, stoppingToken);
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Interruzione richiesta. Imposto ventola al massimo.");
+            string stopMsg = "Interruzione richiesta. Imposto ventola al massimo.";
+            if (_isDevelopment && _consoleDisplayService != null)
+                _consoleDisplayService.AddLog(stopMsg);
+            _logger.LogInformation(stopMsg);
         }
         finally
         {
