@@ -118,16 +118,17 @@ def draw_fan_gauge(fan_speed):
     # Calculate how many characters to fill based on fan speed percentage
     fill_width = int((fan_speed / 100) * gauge_width)
     
-    # Create the gauge bar
-    gauge_bar = BLUE + fill_char * fill_width + empty_char * (gauge_width - fill_width) + RESET
-    
     # Create the gauge labels
     gauge_label = "Fan Speed: "
+    label_length = len(gauge_label)
+    
+    # Create the gauge bar
+    gauge_bar = BLUE + fill_char * fill_width + empty_char * (gauge_width - fill_width) + RESET
     
     # Build the gauge display
     result = []
     result.append(f"\n{gauge_label}{gauge_bar} {fan_speed}%")
-    result.append(f"0%{' ' * (gauge_width - 5)}100%")
+    result.append(f"{' ' * label_length}0%{' ' * (gauge_width - 5)}100%")
     
     return "\n".join(result)
 
