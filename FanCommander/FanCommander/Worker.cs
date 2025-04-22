@@ -38,7 +38,16 @@ public class Worker : BackgroundService
         if (_isDevelopment && _consoleDisplayService != null)
             _consoleDisplayService.AddLog(startMsg);
         _logger.LogInformation(startMsg);
-        _fanService.Start();
+        try
+        {
+            _fanService.Start();
+        }
+        catch (Exception ex)
+        {
+            string errMsg = "Errore nell'inizializzazione del PWM/GPIO. Verifica i permessi e i device Docker.";
+            _logger.LogError(ex, errMsg);
+            return; // termina il worker
+        }
         try
         {
             while (!stoppingToken.IsCancellationRequested)
