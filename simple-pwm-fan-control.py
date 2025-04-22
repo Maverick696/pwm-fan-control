@@ -123,14 +123,11 @@ def draw_fan_gauge(fan_speed):
     
     # Create the gauge labels
     gauge_label = "Fan Speed: "
-    gauge_min = "0%"
-    gauge_max = "100%"
     
     # Build the gauge display
     result = []
-    result.append("\nFan Speed Gauge:")
-    result.append(f"{gauge_label}{gauge_bar} {fan_speed}%")
-    result.append(f"{gauge_min}{' ' * (gauge_width - len(gauge_min) - len(gauge_max) + 10)}{gauge_max}")
+    result.append(f"\n{gauge_label}{gauge_bar} {fan_speed}%")
+    result.append(f"0%{' ' * (gauge_width - 5)}100%")
     
     return "\n".join(result)
 
