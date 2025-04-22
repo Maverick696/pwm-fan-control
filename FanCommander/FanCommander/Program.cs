@@ -1,6 +1,7 @@
 using FanCommander;
 using FanCommander.Services;
 using FanCommander.Console;
+using FanCommander.Models;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.Configure<FanCommanderSettings>(
