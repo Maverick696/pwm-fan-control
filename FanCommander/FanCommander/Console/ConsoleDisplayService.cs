@@ -36,8 +36,11 @@ public class ConsoleDisplayService : IConsoleDisplayService
         var title = _localizer["ConsoleTitle"].Value;
         var border = new string('=', title.Length);
         System.Console.WriteLine($"\n{border}\n{title}\n{border}\n");
-        System.Console.WriteLine(string.Format(_localizer["ConsoleStatus"].Value, temperature, fanSpeed));
-        System.Console.WriteLine(DrawGraph(_tempHistory.GetAll()));
+        var status = _localizer["ConsoleStatus"].Value
+            .Replace("{temp}", temperature.ToString("F1"))
+            .Replace("{fan}", fanSpeed.ToString());
+        System.Console.WriteLine(status);
+        System.Console.WriteLine(DrawGraph(_tempHistory.GetAll(), temperature, fanSpeed));
         System.Console.WriteLine(DrawFanGauge(fanSpeed));
         System.Console.WriteLine();
         System.Console.WriteLine(_localizer["ConsoleLog"].Value);
@@ -58,10 +61,10 @@ public class ConsoleDisplayService : IConsoleDisplayService
             System.Console.Write("\u001b[H\u001b[J");
     }
 
-    private string DrawGraph(IReadOnlyCollection<double> tempHistory)
+    private string DrawGraph(IReadOnlyCollection<double> tempHistory, double temperature, int fanSpeed)
     {
         if (tempHistory.Count == 0)
-            return _localizer["ConsoleGraphCollecting"] + "\n";
+            return _localizer["ConsoleGraphCollecting"].Value + "\n";
         var tempList = tempHistory.ToArray();
         double tempMin = tempList.Min();
         double tempMax = tempList.Max();
@@ -87,8 +90,7 @@ public class ConsoleDisplayService : IConsoleDisplayService
             string row = yLabel + string.Concat(Enumerable.Range(0, GraphWidth).Select(x => graph[y, x]));
             result.Add(row);
         }
-        result.Add("       +" + new string('-', GraphWidth));
-        result.Add(_localizer["ConsoleGraphTime"]);
+        result.Add(_localizer["ConsoleGraphTime"].Value);
         var legend = _localizer["ConsoleGraphLegend"].Value.Replace("{redDot}", "\u001b[31m●\u001b[0m");
         result.Add(legend);
         return string.Join("\n", result);

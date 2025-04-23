@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="FanStarted" xml:space="preserve">
-    <value>FanCommander started. PWM on GPIO{0} at {1}Hz</value>
+    <value>FanCommander started. PWM on GPIO{pin} at {freq}Hz</value>
   </data>
   <data name="FanStopped" xml:space="preserve">
     <value>PWM stopped</value>
@@ -10,16 +10,16 @@
     <value>DutyCycle set to max</value>
   </data>
   <data name="FanSetSpeed" xml:space="preserve">
-    <value>DutyCycle set to {0:P0}</value>
+    <value>DutyCycle set to {duty}</value>
   </data>
   <data name="WorkerStarted" xml:space="preserve">
-    <value>FanCommander worker started. PWM on GPIO{0} at {1}Hz</value>
+    <value>FanCommander worker started. PWM on GPIO{pin} at {freq}Hz</value>
   </data>
   <data name="WorkerHardwareError" xml:space="preserve">
     <value>Hardware initialization error (PWM/GPIO). Check Docker permissions and devices.</value>
   </data>
   <data name="WorkerStatus" xml:space="preserve">
-    <value>Temp: {0:F1}°C | Fan: {1}%</value>
+    <value>Temp: {temp}°C | Fan: {fan}%</value>
   </data>
   <data name="WorkerStopped" xml:space="preserve">
     <value>Shutdown requested. Setting fan to max speed.</value>
@@ -31,7 +31,7 @@
     <value>PWM FAN Control</value>
   </data>
   <data name="ConsoleStatus" xml:space="preserve">
-    <value>CPU Temperature: {0,5:F1}°C    |    Fan Speed: {1,3}%</value>
+    <value>CPU Temperature: {temp}°C    |    Fan Speed: {fan}%</value>
   </data>
   <data name="ConsoleLog" xml:space="preserve">
     <value>Log:</value>

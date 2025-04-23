@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="FanStarted" xml:space="preserve">
-    <value>FanCommander avviato. PWM su GPIO{0} a {1}Hz</value>
+    <value>FanCommander avviato. PWM su GPIO{pin} a {freq}Hz</value>
   </data>
   <data name="FanStopped" xml:space="preserve">
     <value>PWM fermato</value>
@@ -10,16 +10,16 @@
     <value>DutyCycle impostato al massimo</value>
   </data>
   <data name="FanSetSpeed" xml:space="preserve">
-    <value>DutyCycle impostato a {0:P0}</value>
+    <value>DutyCycle impostato a {duty}</value>
   </data>
   <data name="WorkerStarted" xml:space="preserve">
-    <value>Worker FanCommander avviato. PWM su GPIO{0} a {1}Hz</value>
+    <value>Worker FanCommander avviato. PWM su GPIO{pin} a {freq}Hz</value>
   </data>
   <data name="WorkerHardwareError" xml:space="preserve">
     <value>Errore di inizializzazione hardware (PWM/GPIO). Controlla permessi e device Docker.</value>
   </data>
   <data name="WorkerStatus" xml:space="preserve">
-    <value>Temp: {0:F1}°C | Fan: {1}%</value>
+    <value>Temp: {temp}°C | Fan: {fan}%</value>
   </data>
   <data name="WorkerStopped" xml:space="preserve">
     <value>Terminazione richiesta. Imposto ventola al massimo.</value>
@@ -31,7 +31,7 @@
     <value>Controllo PWM Ventola</value>
   </data>
   <data name="ConsoleStatus" xml:space="preserve">
-    <value>Temperatura CPU: {0,5:F1}°C    |    Velocità ventola: {1,3}%</value>
+    <value>Temperatura CPU: {temp}°C    |    Velocità ventola: {fan}%</value>
   </data>
   <data name="ConsoleLog" xml:space="preserve">
     <value>Log:</value>

@@ -36,7 +36,9 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        string startMsg = _localizer["WorkerStarted", _settings.PwmPin, _settings.PwmFrequency];
+        var startMsg = _localizer["WorkerStarted"].Value
+            .Replace("{pin}", _settings.PwmPin.ToString())
+            .Replace("{freq}", _settings.PwmFrequency.ToString());
         if (_isDevelopment && _consoleDisplayService != null)
             _consoleDisplayService.AddLog(startMsg);
         _logger.LogInformation(startMsg);
@@ -46,7 +48,7 @@ public class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            string errMsg = _localizer["WorkerHardwareError"];
+            string errMsg = _localizer["WorkerHardwareError"].Value;
             if (_isDevelopment && _consoleDisplayService != null)
                 _consoleDisplayService.AddLog(errMsg + $"\n{ex.Message}");
             _logger.LogError(ex, errMsg);
@@ -60,7 +62,9 @@ public class Worker : BackgroundService
                 double clampedTemp = Math.Clamp(temperature, _settings.MinTemp, _settings.MaxTemp);
                 int fanSpeed = (int)Renormalizer.Renormalize(clampedTemp, _settings.MinTemp, _settings.MaxTemp, _settings.MinSpeed, _settings.MaxSpeed);
                 _fanService.SetFanSpeed(fanSpeed);
-                string infoMsg = _localizer["WorkerStatus", temperature, fanSpeed];
+                var infoMsg = _localizer["WorkerStatus"].Value
+                    .Replace("{temp}", temperature.ToString("F1"))
+                    .Replace("{fan}", fanSpeed.ToString());
                 if (_isDevelopment && _consoleDisplayService != null)
                 {
                     _consoleDisplayService.Update(temperature, fanSpeed);
@@ -72,7 +76,7 @@ public class Worker : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            string stopMsg = _localizer["WorkerStopped"];
+            string stopMsg = _localizer["WorkerStopped"].Value;
             if (_isDevelopment && _consoleDisplayService != null)
                 _consoleDisplayService.AddLog(stopMsg);
             _logger.LogInformation(stopMsg);
