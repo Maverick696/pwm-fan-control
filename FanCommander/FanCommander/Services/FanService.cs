@@ -31,26 +31,26 @@ public class FanService : IFanService, IDisposable
     public void Start()
     {
         _fanController.Start();
-        _logger.LogInformation(_localizer["FanStarted"], _settings.PwmPin, _settings.PwmFrequency);
+        _logger.LogInformation(_localizer["FanStarted"].Value, _settings.PwmPin, _settings.PwmFrequency);
     }
 
     public void SetFanSpeed(int percent)
     {
         double duty = Math.Clamp(percent, 0, 100) / 100.0;
         _fanController.SetDutyCycle(duty);
-        _logger.LogDebug(_localizer["FanSetSpeed"], duty);
+        _logger.LogDebug(_localizer["FanSetSpeed"].Value, duty);
     }
 
     public void SetMaxSpeed()
     {
         _fanController.SetDutyCycle(_settings.MaxFanSpeed / 100.0);
-        _logger.LogInformation(_localizer["FanMaxSpeed"]);
+        _logger.LogInformation(_localizer["FanMaxSpeed"].Value);
     }
 
     public void Stop()
     {
         _fanController.Stop();
-        _logger.LogInformation(_localizer["FanStopped"]);
+        _logger.LogInformation(_localizer["FanStopped"].Value);
     }
 
     public void Dispose()

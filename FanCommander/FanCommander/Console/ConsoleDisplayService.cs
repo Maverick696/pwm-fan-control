@@ -36,13 +36,13 @@ public class ConsoleDisplayService : IConsoleDisplayService
         var title = _localizer["ConsoleTitle"].Value;
         var border = new string('=', title.Length);
         System.Console.WriteLine($"\n{border}\n{title}\n{border}\n");
-        System.Console.WriteLine(string.Format(_localizer["ConsoleStatus"], temperature, fanSpeed));
+        System.Console.WriteLine(string.Format(_localizer["ConsoleStatus"].Value, temperature, fanSpeed));
         System.Console.WriteLine(DrawGraph(_tempHistory.GetAll()));
         System.Console.WriteLine(DrawFanGauge(fanSpeed));
         System.Console.WriteLine();
-        System.Console.WriteLine(_localizer["ConsoleLog"]);
+        System.Console.WriteLine(_localizer["ConsoleLog"].Value);
         foreach (var log in _logBuffer.GetAll())
-            System.Console.WriteLine(log);
+            System.Console.WriteLine(log.ToString());
     }
 
     public void AddLog(string message)

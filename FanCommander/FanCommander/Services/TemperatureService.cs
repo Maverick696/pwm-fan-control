@@ -28,7 +28,7 @@ public class TemperatureService : ITemperatureService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, _localizer["TempReadError"]);
+            _logger.LogWarning(ex, _localizer["TempReadError"].Value);
             return 50.0;
         }
     }
