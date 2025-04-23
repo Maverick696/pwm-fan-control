@@ -101,7 +101,7 @@ public class ConsoleDisplayService : IConsoleDisplayService
         int gaugeWidth = GraphWidth;
         int fillWidth = (int)(fanSpeed / 100.0 * gaugeWidth);
         string fill = "\u001b[34m" + new string('█', fillWidth) + new string('░', gaugeWidth - fillWidth) + "\u001b[0m";
-        string gaugeLabel = _localizer["ConsoleGaugeLabel"];
+        string gaugeLabel = _localizer["ConsoleGaugeLabel"].Value;
         int labelLength = gaugeLabel.Length;
         var result = new List<string>();
         result.Add($"\n{gaugeLabel}{fill} {fanSpeed}%");
