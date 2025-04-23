@@ -1,5 +1,6 @@
 using FanCommander.Models;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Localization;
 
 namespace FanCommander.Console;
 
@@ -17,12 +18,14 @@ public class ConsoleDisplayService : IConsoleDisplayService
     private readonly HistoryBuffer<double> _tempHistory;
     private readonly HistoryBuffer<int> _fanHistory;
     private readonly HistoryBuffer<string> _logBuffer;
+    private readonly IStringLocalizer<ConsoleDisplayService> _localizer;
 
-    public ConsoleDisplayService()
+    public ConsoleDisplayService(IStringLocalizer<ConsoleDisplayService> localizer)
     {
         _tempHistory = new HistoryBuffer<double>(GraphWidth);
         _fanHistory = new HistoryBuffer<int>(GraphWidth);
         _logBuffer = new HistoryBuffer<string>(LogLines);
+        _localizer = localizer;
     }
 
     public void Update(double temperature, int fanSpeed)
@@ -30,14 +33,14 @@ public class ConsoleDisplayService : IConsoleDisplayService
         _tempHistory.Add(temperature);
         _fanHistory.Add(fanSpeed);
         ClearConsole();
-        var title = "PWM FAN Control";
+        var title = _localizer["ConsoleTitle"].Value;
         var border = new string('=', title.Length);
         System.Console.WriteLine($"\n{border}\n{title}\n{border}\n");
-        System.Console.WriteLine($"CPU Temperature: {temperature,5:F1}°C    |    Fan Speed: {fanSpeed,3}%\n");
+        System.Console.WriteLine(string.Format(_localizer["ConsoleStatus"], temperature, fanSpeed));
         System.Console.WriteLine(DrawGraph(_tempHistory.GetAll()));
         System.Console.WriteLine(DrawFanGauge(fanSpeed));
         System.Console.WriteLine();
-        System.Console.WriteLine("Log:");
+        System.Console.WriteLine(_localizer["ConsoleLog"]);
         foreach (var log in _logBuffer.GetAll())
             System.Console.WriteLine(log);
     }
@@ -58,7 +61,7 @@ public class ConsoleDisplayService : IConsoleDisplayService
     private string DrawGraph(IReadOnlyCollection<double> tempHistory)
     {
         if (tempHistory.Count == 0)
-            return "Collecting data for graph...\n";
+            return _localizer["ConsoleGraphCollecting"] + "\n";
         var tempList = tempHistory.ToArray();
         double tempMin = tempList.Min();
         double tempMax = tempList.Max();
@@ -85,8 +88,9 @@ public class ConsoleDisplayService : IConsoleDisplayService
             result.Add(row);
         }
         result.Add("       +" + new string('-', GraphWidth));
-        result.Add("       Time →");
-        result.Add("  Legend: \u001b[31m●\u001b[0m CPU Temperature");
+        result.Add(_localizer["ConsoleGraphTime"]);
+        var legend = _localizer["ConsoleGraphLegend"].Value.Replace("{redDot}", "\u001b[31m●\u001b[0m");
+        result.Add(legend);
         return string.Join("\n", result);
     }
 
@@ -95,7 +99,7 @@ public class ConsoleDisplayService : IConsoleDisplayService
         int gaugeWidth = GraphWidth;
         int fillWidth = (int)(fanSpeed / 100.0 * gaugeWidth);
         string fill = "\u001b[34m" + new string('█', fillWidth) + new string('░', gaugeWidth - fillWidth) + "\u001b[0m";
-        string gaugeLabel = "Fan Speed: ";
+        string gaugeLabel = _localizer["ConsoleGaugeLabel"];
         int labelLength = gaugeLabel.Length;
         var result = new List<string>();
         result.Add($"\n{gaugeLabel}{fill} {fanSpeed}%");

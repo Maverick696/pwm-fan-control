@@ -1,15 +1,9 @@
-#if DEBUG
-using System.Runtime.InteropServices;
-#endif
-using System.Device.Gpio;
-using System.Device.Pwm;
-using System.Device.Pwm.Drivers;
 using FanCommander.Models;
 using FanCommander.Services;
 using FanCommander.Utils;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Hosting;
 using FanCommander.Console;
+using Microsoft.Extensions.Localization;
 
 namespace FanCommander;
 
@@ -21,8 +15,15 @@ public class Worker : BackgroundService
     private readonly ITemperatureService _temperatureService;
     private readonly bool _isDevelopment;
     private readonly IConsoleDisplayService? _consoleDisplayService;
+    private readonly IStringLocalizer<Worker> _localizer;
 
-    public Worker(ILogger<Worker> logger, IOptions<FanCommanderSettings> options, IFanService fanService, ITemperatureService temperatureService, IConsoleDisplayService? consoleDisplayService = null)
+    public Worker(
+        ILogger<Worker> logger,
+        IOptions<FanCommanderSettings> options,
+        IFanService fanService,
+        ITemperatureService temperatureService,
+        IConsoleDisplayService? consoleDisplayService,
+        IStringLocalizer<Worker> localizer)
     {
         _logger = logger;
         _settings = options.Value;
@@ -30,11 +31,12 @@ public class Worker : BackgroundService
         _temperatureService = temperatureService;
         _isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
         _consoleDisplayService = _isDevelopment ? consoleDisplayService : null;
+        _localizer = localizer;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        string startMsg = $"FanCommander avviato. PWM su GPIO{_settings.PwmPin} a {_settings.PwmFrequency}Hz";
+        string startMsg = _localizer["WorkerStarted", _settings.PwmPin, _settings.PwmFrequency];
         if (_isDevelopment && _consoleDisplayService != null)
             _consoleDisplayService.AddLog(startMsg);
         _logger.LogInformation(startMsg);
@@ -44,7 +46,9 @@ public class Worker : BackgroundService
         }
         catch (Exception ex)
         {
-            string errMsg = "Errore nell'inizializzazione del PWM/GPIO. Verifica i permessi e i device Docker.";
+            string errMsg = _localizer["WorkerHardwareError"];
+            if (_isDevelopment && _consoleDisplayService != null)
+                _consoleDisplayService.AddLog(errMsg + $"\n{ex.Message}");
             _logger.LogError(ex, errMsg);
             return; // termina il worker
         }
@@ -56,7 +60,7 @@ public class Worker : BackgroundService
                 double clampedTemp = Math.Clamp(temperature, _settings.MinTemp, _settings.MaxTemp);
                 int fanSpeed = (int)Renormalizer.Renormalize(clampedTemp, _settings.MinTemp, _settings.MaxTemp, _settings.MinSpeed, _settings.MaxSpeed);
                 _fanService.SetFanSpeed(fanSpeed);
-                string infoMsg = $"Temp: {temperature:F1}°C | Fan: {fanSpeed}%";
+                string infoMsg = _localizer["WorkerStatus", temperature, fanSpeed];
                 if (_isDevelopment && _consoleDisplayService != null)
                 {
                     _consoleDisplayService.Update(temperature, fanSpeed);
@@ -68,7 +72,7 @@ public class Worker : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            string stopMsg = "Interruzione richiesta. Imposto ventola al massimo.";
+            string stopMsg = _localizer["WorkerStopped"];
             if (_isDevelopment && _consoleDisplayService != null)
                 _consoleDisplayService.AddLog(stopMsg);
             _logger.LogInformation(stopMsg);

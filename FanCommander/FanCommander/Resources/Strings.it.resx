@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="FanStarted" xml:space="preserve">
+    <value>FanCommander avviato. PWM su GPIO{0} a {1}Hz</value>
+  </data>
+  <data name="FanStopped" xml:space="preserve">
+    <value>PWM fermato</value>
+  </data>
+  <data name="FanMaxSpeed" xml:space="preserve">
+    <value>DutyCycle impostato al massimo</value>
+  </data>
+  <data name="FanSetSpeed" xml:space="preserve">
+    <value>DutyCycle impostato a {0:P0}</value>
+  </data>
+  <data name="WorkerStarted" xml:space="preserve">
+    <value>Worker FanCommander avviato. PWM su GPIO{0} a {1}Hz</value>
+  </data>
+  <data name="WorkerHardwareError" xml:space="preserve">
+    <value>Errore di inizializzazione hardware (PWM/GPIO). Controlla permessi e device Docker.</value>
+  </data>
+  <data name="WorkerStatus" xml:space="preserve">
+    <value>Temp: {0:F1}°C | Fan: {1}%</value>
+  </data>
+  <data name="WorkerStopped" xml:space="preserve">
+    <value>Terminazione richiesta. Imposto ventola al massimo.</value>
+  </data>
+  <data name="TempReadError" xml:space="preserve">
+    <value>Impossibile leggere la temperatura dal thermal zone. Uso valore di fallback.</value>
+  </data>
+  <data name="ConsoleTitle" xml:space="preserve">
+    <value>Controllo PWM Ventola</value>
+  </data>
+  <data name="ConsoleStatus" xml:space="preserve">
+    <value>Temperatura CPU: {0,5:F1}°C    |    Velocità ventola: {1,3}%</value>
+  </data>
+  <data name="ConsoleLog" xml:space="preserve">
+    <value>Log:</value>
+  </data>
+  <data name="ConsoleGraphCollecting" xml:space="preserve">
+    <value>Raccolta dati per il grafico...</value>
+  </data>
+  <data name="ConsoleGraphTime" xml:space="preserve">
+    <value>       Tempo →</value>
+  </data>
+  <data name="ConsoleGraphLegend" xml:space="preserve">
+    <value>  Legenda: {redDot} Temperatura CPU</value>
+  </data>
+  <data name="ConsoleGaugeLabel" xml:space="preserve">
+    <value>Velocità ventola: </value>
+  </data>
+</root>

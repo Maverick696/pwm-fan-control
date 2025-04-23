@@ -1,4 +1,3 @@
-using System.Device.Pwm;
 using System.Device.Pwm.Drivers;
 
 namespace FanCommander.Hardware;
