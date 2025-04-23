@@ -1,14 +1,30 @@
 services:
-  fancommander:
+  fan-commander:
     image: maverick696/fan-commander:latest
-    container_name: fancommander
-    restart: unless-stopped
+    build:
+      context: ../FanCommander/FanCommander
+      dockerfile: Dockerfile
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.fancommander==true
+      restart_policy:
+        condition: any
+      # resources:
+      #   limits:
+      #     cpus: "0.50"
+      #     memory: 256M
+      #   reservations:
+      #     cpus: "0.10"
+      #     memory: 64M
     privileged: true
     devices:
       - /dev/gpiomem:/dev/gpiomem
       - /sys/class/thermal:/sys/class/thermal:ro
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+    env_file:
+      - ./env/fan-commander.env
     # (opzionale) monta la configurazione custom
     # volumes:
     #   - ./appsettings.Production.json:/app/appsettings.json:ro
