@@ -10,6 +10,7 @@ public interface IFanService
     void SetMaxSpeed();
     void Start();
     void Stop();
+    void Dispose();
 }
 
 public class FanService : IFanService, IDisposable
@@ -53,5 +54,6 @@ public class FanService : IFanService, IDisposable
     public void Dispose()
     {
         _fanController?.Dispose();
+        _logger.LogInformation("PWM disposed");
     }
 }

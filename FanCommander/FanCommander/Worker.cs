@@ -56,8 +56,10 @@ public class Worker : BackgroundService
         }
         finally
         {
-            _fanService.SetMaxSpeed();
+            _fanService.Stop();
             await Task.Delay(1000); // Breve attesa per garantire che il segnale PWM venga applicato
+            _fanService.Dispose();
+            _logger.LogInformation("FanCommander worker stopped.");
         }
     }
 }
