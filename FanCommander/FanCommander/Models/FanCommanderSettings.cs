@@ -10,4 +10,5 @@ public class FanCommanderSettings
     public int MaxSpeed { get; set; }
     public int MaxFanSpeed { get; set; }
     public int UpdateIntervalMs { get; set; }
+    public string? CsvLogPath { get; set; }
 }
