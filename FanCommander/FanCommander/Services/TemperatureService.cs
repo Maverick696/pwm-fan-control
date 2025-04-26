@@ -1,5 +1,4 @@
 using FanCommander.Hardware;
-using Microsoft.Extensions.Localization;
 
 namespace FanCommander.Services;
 
@@ -12,12 +11,10 @@ public class TemperatureService : ITemperatureService
 {
     private readonly ILogger<TemperatureService> _logger;
     private readonly CpuTemperatureSensor _sensor;
-    private readonly IStringLocalizer<TemperatureService> _localizer;
-    public TemperatureService(ILogger<TemperatureService> logger, IStringLocalizer<TemperatureService> localizer)
+    public TemperatureService(ILogger<TemperatureService> logger)
     {
         _logger = logger;
         _sensor = new CpuTemperatureSensor();
-        _localizer = localizer;
     }
 
     public double GetCpuTemperature()
@@ -28,7 +25,10 @@ public class TemperatureService : ITemperatureService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, _localizer["TempReadError"].Value);
+            _logger.LogWarning(
+                ex,
+                "Could not read temperature from thermal zone. Using fallback value."
+            );
             return 50.0;
         }
     }

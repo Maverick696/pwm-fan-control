@@ -2,8 +2,6 @@ using FanCommander.Models;
 using FanCommander.Services;
 using FanCommander.Utils;
 using Microsoft.Extensions.Options;
-using FanCommander.Console;
-using Microsoft.Extensions.Localization;
 
 namespace FanCommander;
 
@@ -13,44 +11,29 @@ public class Worker : BackgroundService
     private readonly FanCommanderSettings _settings;
     private readonly IFanService _fanService;
     private readonly ITemperatureService _temperatureService;
-    private readonly bool _isDevelopment;
-    private readonly IConsoleDisplayService? _consoleDisplayService;
-    private readonly IStringLocalizer<Worker> _localizer;
 
     public Worker(
         ILogger<Worker> logger,
         IOptions<FanCommanderSettings> options,
         IFanService fanService,
-        ITemperatureService temperatureService,
-        IConsoleDisplayService? consoleDisplayService,
-        IStringLocalizer<Worker> localizer)
+        ITemperatureService temperatureService)
     {
         _logger = logger;
         _settings = options.Value;
         _fanService = fanService;
         _temperatureService = temperatureService;
-        _isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-        _consoleDisplayService = _isDevelopment ? consoleDisplayService : null;
-        _localizer = localizer;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var startMsg = _localizer["WorkerStarted"].Value
-            .Replace("{pin}", _settings.PwmPin.ToString())
-            .Replace("{freq}", _settings.PwmFrequency.ToString());
-        if (_isDevelopment && _consoleDisplayService != null)
-            _consoleDisplayService.AddLog(startMsg);
-        _logger.LogInformation(startMsg);
+        _logger.LogInformation($"FanCommander worker started. PWM on GPIO{_settings.PwmPin} at {_settings.PwmFrequency}Hz");
         try
         {
             _fanService.Start();
         }
         catch (Exception ex)
         {
-            string errMsg = _localizer["WorkerHardwareError"].Value;
-            if (_isDevelopment && _consoleDisplayService != null)
-                _consoleDisplayService.AddLog(errMsg + $"\n{ex.Message}");
+            string errMsg = "Hardware initialization error (PWM/GPIO). Check Docker permissions and devices.";
             _logger.LogError(ex, errMsg);
             return; // termina il worker
         }
@@ -62,30 +45,20 @@ public class Worker : BackgroundService
                 double clampedTemp = Math.Clamp(temperature, _settings.MinTemp, _settings.MaxTemp);
                 int fanSpeed = (int)Renormalizer.Renormalize(clampedTemp, _settings.MinTemp, _settings.MaxTemp, _settings.MinSpeed, _settings.MaxSpeed);
                 _fanService.SetFanSpeed(fanSpeed);
-                var infoMsg = _localizer["WorkerStatus"].Value
-                    .Replace("{temp}", temperature.ToString("F1"))
-                    .Replace("{fan}", fanSpeed.ToString());
-                if (_isDevelopment && _consoleDisplayService != null)
-                {
-                    _consoleDisplayService.Update(temperature, fanSpeed);
-                    _consoleDisplayService.AddLog(infoMsg);
-                }
-                _logger.LogInformation(infoMsg);
+                _logger.LogInformation($"Temp: {temperature:F1}°C | Fan: {fanSpeed}%");
                 await Task.Delay(_settings.UpdateIntervalMs, stoppingToken);
             }
         }
         catch (OperationCanceledException)
         {
-            string stopMsg = _localizer["WorkerStopped"].Value;
-            if (_isDevelopment && _consoleDisplayService != null)
-                _consoleDisplayService.AddLog(stopMsg);
+            string stopMsg = "Shutdown requested. Setting fan to max speed.";
             _logger.LogInformation(stopMsg);
         }
         finally
         {
             _fanService.SetMaxSpeed();
             await Task.Delay(1000); // Breve attesa
-            _fanService.Stop();
+            _fanService.Stop(); // TODO: Dispose del controller PWM and leave the fan on and at max speed.
         }
     }
 }
